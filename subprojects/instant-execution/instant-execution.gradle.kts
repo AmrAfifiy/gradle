@@ -2,6 +2,7 @@ import build.futureKotlin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    gradlebuild.`strict-compile`
     gradlebuild.distribution.`plugins-implementation-kotlin`
 }
 
