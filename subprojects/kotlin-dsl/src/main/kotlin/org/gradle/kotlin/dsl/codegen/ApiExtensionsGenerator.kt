@@ -278,7 +278,10 @@ data class KotlinExtensionFunction(
              * @see ${targetType.sourceName}.$name
              */
         """.trimIndent())
-        if (isDeprecated) appendReproducibleNewLine("""@Deprecated("Deprecated Gradle API")""")
+        if (isDeprecated) {
+            appendReproducibleNewLine("""@Deprecated("Deprecated Gradle API")""")
+            appendReproducibleNewLine("""@Suppress("DEPRECATION")""")
+        }
         if (isIncubating) appendReproducibleNewLine("@org.gradle.api.Incubating")
         append("inline fun ")
         if (typeParameters.isNotEmpty()) append("${typeParameters.joinInAngleBrackets { it.toTypeParameterString() }} ")

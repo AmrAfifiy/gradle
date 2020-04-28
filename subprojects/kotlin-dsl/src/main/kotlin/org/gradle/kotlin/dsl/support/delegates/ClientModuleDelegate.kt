@@ -105,6 +105,7 @@ abstract class ClientModuleDelegate : ClientModule {
         delegate.setTransitive(transitive)
 
     override fun setForce(force: Boolean): ExternalDependency =
+        @Suppress("DEPRECATION")
         delegate.setForce(force)
 
     override fun contentEquals(dependency: Dependency): Boolean =
