@@ -49,6 +49,7 @@ class BuildCacheConfigurationExtensionsTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun local() {
 
         val buildCache = mock<BuildCacheConfiguration> {
