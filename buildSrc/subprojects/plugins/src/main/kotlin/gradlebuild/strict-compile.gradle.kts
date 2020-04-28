@@ -16,6 +16,7 @@
 package gradlebuild
 
 import org.gradle.plugins.strictcompile.StrictCompileExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val strictCompile = extensions.create<StrictCompileExtension>("strictCompile")
 
@@ -23,4 +24,8 @@ val strictCompilerArgs = listOf("-Werror", "-Xlint:all", "-Xlint:-options", "-Xl
 
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(strictCompilerArgs)
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.allWarningsAsErrors = true
 }
