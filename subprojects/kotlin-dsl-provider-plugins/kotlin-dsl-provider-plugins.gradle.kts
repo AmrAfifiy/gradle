@@ -18,6 +18,7 @@ import build.futureKotlin
 
 plugins {
     gradlebuild.distribution.`plugins-implementation-kotlin`
+    gradlebuild.`strict-compile`
 }
 
 description = "Kotlin DSL Provider Plugins"
