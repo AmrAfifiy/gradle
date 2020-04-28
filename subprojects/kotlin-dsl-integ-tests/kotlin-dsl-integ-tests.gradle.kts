@@ -20,6 +20,7 @@ import org.gradle.gradlebuild.testing.integrationtests.cleanup.WhenNotEmpty
 
 plugins {
     gradlebuild.internal.kotlin
+    gradlebuild.`strict-compile`
 }
 
 description = "Kotlin DSL Integration Tests"
