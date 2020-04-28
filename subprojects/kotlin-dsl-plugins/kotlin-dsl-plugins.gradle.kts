@@ -23,6 +23,7 @@ import plugins.bundledGradlePlugin
 
 plugins {
     gradlebuild.portalplugin.kotlin
+    gradlebuild.`strict-compile`
 }
 
 description = "Kotlin DSL Gradle Plugins deployed to the Plugin Portal"
