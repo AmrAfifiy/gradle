@@ -16,6 +16,7 @@
 
 plugins {
     gradlebuild.internal.`kotlin-js`
+    gradlebuild.`strict-compile`
 }
 
 dependencies {
