@@ -24,6 +24,7 @@ import org.gradle.gradlebuild.testing.integrationtests.cleanup.WhenNotEmpty
 
 plugins {
     gradlebuild.distribution.`core-api-kotlin`
+    gradlebuild.`strict-compile`
 }
 
 description = "Kotlin DSL Provider"
