@@ -48,6 +48,7 @@ public class DefaultProperty<T> extends AbstractProperty<T, ProviderInternal<? e
         return ManagedFactories.PropertyManagedFactory.FACTORY_ID;
     }
 
+    @Nullable
     @Override
     public Class<T> getType() {
         return type;
