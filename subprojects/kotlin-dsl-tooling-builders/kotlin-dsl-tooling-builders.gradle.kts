@@ -19,6 +19,7 @@ import org.gradle.gradlebuild.testing.integrationtests.cleanup.WhenNotEmpty
 
 plugins {
     gradlebuild.distribution.`plugins-implementation-kotlin`
+    gradlebuild.`strict-compile`
 }
 
 description = "Kotlin DSL Tooling Builders for IDEs"
