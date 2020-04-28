@@ -16,6 +16,7 @@
 
 plugins {
     gradlebuild.internal.kotlin
+    gradlebuild.`strict-compile`
 }
 
 description = "Kotlin DSL Test Fixtures"
