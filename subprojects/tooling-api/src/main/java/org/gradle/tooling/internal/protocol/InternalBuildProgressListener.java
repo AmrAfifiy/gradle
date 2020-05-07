@@ -48,6 +48,11 @@ public interface InternalBuildProgressListener {
     String PROJECT_CONFIGURATION_EXECUTION = "PROJECT_CONFIGURATION_EXECUTION";
 
     /**
+     * The constant for the project configuration operations.
+     */
+    String CONFIGURATION_STEPS_EXECUTION = "CONFIGURATION_STEPS_EXECUTION";
+
+    /**
      * The constant for the transform operations.
      */
     String TRANSFORM_EXECUTION = "TRANSFORM_EXECUTION";

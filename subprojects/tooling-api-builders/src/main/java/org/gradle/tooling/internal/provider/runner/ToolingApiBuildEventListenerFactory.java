@@ -62,7 +62,8 @@ public class ToolingApiBuildEventListenerFactory implements BuildEventListenerFa
             }
             listeners.add(buildListener);
         }
-        if (subscriptions.isAnyRequested(OperationType.GENERIC, OperationType.WORK_ITEM, OperationType.TASK, OperationType.PROJECT_CONFIGURATION, OperationType.TRANSFORM)) {
+        if (subscriptions.isAnyRequested(OperationType.GENERIC, OperationType.WORK_ITEM, OperationType.TASK, OperationType.PROJECT_CONFIGURATION, OperationType.CONFIGURATION_STEPS,
+                                         OperationType.TRANSFORM)) {
             BuildOperationListener buildListener = NO_OP;
             if (subscriptions.isRequested(OperationType.GENERIC)) {
                 buildListener = new TestIgnoringBuildOperationListener(new ClientForwardingBuildOperationListener(progressEventConsumer));
@@ -77,7 +78,7 @@ public class ToolingApiBuildEventListenerFactory implements BuildEventListenerFa
                 buildListener = transformOperationListener;
             }
             PluginApplicationTracker pluginApplicationTracker = new PluginApplicationTracker(ancestryTracker);
-            if (subscriptions.isAnyRequested(OperationType.PROJECT_CONFIGURATION, OperationType.TASK)) {
+            if (subscriptions.isAnyRequested(OperationType.PROJECT_CONFIGURATION, OperationType.CONFIGURATION_STEPS, OperationType.TASK)) {
                 listeners.add(pluginApplicationTracker);
             }
             if (subscriptions.isAnyRequested(OperationType.GENERIC, OperationType.WORK_ITEM, OperationType.TRANSFORM, OperationType.TASK)) {
@@ -97,7 +98,11 @@ public class ToolingApiBuildEventListenerFactory implements BuildEventListenerFa
                 operationDependenciesResolver.addLookup(taskOperationListener);
                 buildListener = taskOperationListener;
             }
-            listeners.add(new ClientForwardingProjectConfigurationOperationListener(progressEventConsumer, subscriptions, buildListener, ancestryTracker, pluginApplicationTracker));
+            buildListener = new ClientForwardingProjectConfigurationOperationListener(progressEventConsumer, subscriptions, buildListener, ancestryTracker, pluginApplicationTracker);
+            if (subscriptions.isAnyRequested(OperationType.GENERIC, OperationType.CONFIGURATION_STEPS)) {
+                buildListener = new ClientForwardingConfigurationStepsOperationListener(progressEventConsumer, subscriptions, buildListener, pluginApplicationTracker);
+            }
+            listeners.add(buildListener);
         }
         return listeners;
     }

@@ -26,13 +26,20 @@ import org.gradle.tooling.events.PluginIdentifier;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.gradle.tooling.events.StartEvent;
+import org.gradle.tooling.events.configuration.PluginApplicationFinishEvent;
+import org.gradle.tooling.events.configuration.PluginApplicationOperationDescriptor;
+import org.gradle.tooling.events.configuration.PluginApplicationProgressEvent;
+import org.gradle.tooling.events.configuration.PluginApplicationStartEvent;
 import org.gradle.tooling.events.configuration.ProjectConfigurationFinishEvent;
 import org.gradle.tooling.events.configuration.ProjectConfigurationOperationDescriptor;
 import org.gradle.tooling.events.configuration.ProjectConfigurationOperationResult;
 import org.gradle.tooling.events.configuration.ProjectConfigurationOperationResult.PluginApplicationResult;
 import org.gradle.tooling.events.configuration.ProjectConfigurationProgressEvent;
 import org.gradle.tooling.events.configuration.ProjectConfigurationStartEvent;
+import org.gradle.tooling.events.configuration.internal.DefaultPluginApplicationFinishEvent;
+import org.gradle.tooling.events.configuration.internal.DefaultPluginApplicationOperationDescriptor;
 import org.gradle.tooling.events.configuration.internal.DefaultPluginApplicationResult;
+import org.gradle.tooling.events.configuration.internal.DefaultPluginApplicationStartEvent;
 import org.gradle.tooling.events.configuration.internal.DefaultProjectConfigurationFailureResult;
 import org.gradle.tooling.events.configuration.internal.DefaultProjectConfigurationFinishEvent;
 import org.gradle.tooling.events.configuration.internal.DefaultProjectConfigurationOperationDescriptor;
@@ -111,6 +118,7 @@ import org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor;
 import org.gradle.tooling.internal.protocol.events.InternalOperationFinishedProgressEvent;
 import org.gradle.tooling.internal.protocol.events.InternalOperationResult;
 import org.gradle.tooling.internal.protocol.events.InternalOperationStartedProgressEvent;
+import org.gradle.tooling.internal.protocol.events.InternalPluginApplicationDescriptor;
 import org.gradle.tooling.internal.protocol.events.InternalPluginIdentifier;
 import org.gradle.tooling.internal.protocol.events.InternalProgressEvent;
 import org.gradle.tooling.internal.protocol.events.InternalProjectConfigurationDescriptor;
@@ -157,6 +165,7 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
     private final ListenerBroadcast<ProgressListener> buildOperationProgressListeners = new ListenerBroadcast<ProgressListener>(ProgressListener.class);
     private final ListenerBroadcast<ProgressListener> workItemProgressListeners = new ListenerBroadcast<ProgressListener>(ProgressListener.class);
     private final ListenerBroadcast<ProgressListener> projectConfigurationProgressListeners = new ListenerBroadcast<ProgressListener>(ProgressListener.class);
+    private final ListenerBroadcast<ProgressListener> configurationStepsProgressListeners = new ListenerBroadcast<ProgressListener>(ProgressListener.class);
     private final ListenerBroadcast<ProgressListener> transformProgressListeners = new ListenerBroadcast<ProgressListener>(ProgressListener.class);
     private final ListenerBroadcast<ProgressListener> testOutputProgressListeners = new ListenerBroadcast<ProgressListener>(ProgressListener.class);
     private final Map<Object, OperationDescriptor> descriptorCache = new HashMap<Object, OperationDescriptor>();
@@ -168,6 +177,7 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
         buildOperationProgressListeners.addAll(listeners.getOrDefault(OperationType.GENERIC, noListeners));
         workItemProgressListeners.addAll(listeners.getOrDefault(OperationType.WORK_ITEM, noListeners));
         projectConfigurationProgressListeners.addAll(listeners.getOrDefault(OperationType.PROJECT_CONFIGURATION, noListeners));
+        configurationStepsProgressListeners.addAll(listeners.getOrDefault(OperationType.CONFIGURATION_STEPS, noListeners));
         transformProgressListeners.addAll(listeners.getOrDefault(OperationType.TRANSFORM, noListeners));
         testOutputProgressListeners.addAll(listeners.getOrDefault(OperationType.TEST_OUTPUT, noListeners));
     }
@@ -189,6 +199,9 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
         }
         if (!projectConfigurationProgressListeners.isEmpty()) {
             operations.add(InternalBuildProgressListener.PROJECT_CONFIGURATION_EXECUTION);
+        }
+        if (!configurationStepsProgressListeners.isEmpty()) {
+            operations.add(InternalBuildProgressListener.CONFIGURATION_STEPS_EXECUTION);
         }
         if (!transformProgressListeners.isEmpty()) {
             operations.add(InternalBuildProgressListener.TRANSFORM_EXECUTION);
@@ -224,6 +237,8 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
             workItemProgressListeners.getSource().statusChanged(event);
         } else if (event instanceof ProjectConfigurationProgressEvent) {
             projectConfigurationProgressListeners.getSource().statusChanged(event);
+        } else if (event instanceof PluginApplicationProgressEvent) {
+            configurationStepsProgressListeners.getSource().statusChanged(event);
         } else if (event instanceof TransformProgressEvent) {
             transformProgressListeners.getSource().statusChanged(event);
         } else if (event instanceof TestOutputEvent) {
@@ -249,6 +264,8 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
             broadcastWorkItemProgressEvent(progressEvent, (InternalWorkItemDescriptor) descriptor);
         } else if (descriptor instanceof InternalProjectConfigurationDescriptor) {
             broadcastProjectConfigurationProgressEvent(progressEvent, (InternalProjectConfigurationDescriptor) descriptor);
+        } else if (descriptor instanceof InternalPluginApplicationDescriptor) {
+            broadcastPluginApplicationProgressEvent(progressEvent, (InternalPluginApplicationDescriptor) descriptor);
         } else if (descriptor instanceof InternalTransformDescriptor) {
             broadcastTransformProgressEvent(progressEvent, (InternalTransformDescriptor) descriptor);
         } else if (descriptor instanceof InternalTestOutputDescriptor) {
@@ -276,6 +293,13 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
         ProjectConfigurationProgressEvent projectConfigurationProgressEvent = toProjectConfigurationProgressEvent(event, descriptor);
         if (projectConfigurationProgressEvent != null) {
             projectConfigurationProgressListeners.getSource().statusChanged(projectConfigurationProgressEvent);
+        }
+    }
+
+    private void broadcastPluginApplicationProgressEvent(InternalProgressEvent event, InternalPluginApplicationDescriptor descriptor) {
+        ProgressEvent progressEvent = toPluginApplicationProgressEvent(event, descriptor);
+        if (progressEvent != null) {
+            configurationStepsProgressListeners.getSource().statusChanged(progressEvent);
         }
     }
 
@@ -340,6 +364,16 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
         }
     }
 
+    private PluginApplicationProgressEvent toPluginApplicationProgressEvent(InternalProgressEvent event, InternalPluginApplicationDescriptor descriptor) {
+        if (event instanceof InternalOperationStartedProgressEvent) {
+            return pluginApplicationStartedEvent((InternalOperationStartedProgressEvent) event, descriptor);
+        } else if (event instanceof InternalOperationFinishedProgressEvent) {
+            return pluginApplicationFinishedEvent((InternalOperationFinishedProgressEvent) event);
+        } else {
+            return null;
+        }
+    }
+
     private TransformProgressEvent toTransformProgressEvent(InternalProgressEvent event, InternalTransformDescriptor descriptor) {
         if (event instanceof InternalOperationStartedProgressEvent) {
             return transformStartedEvent((InternalOperationStartedProgressEvent) event, descriptor);
@@ -388,6 +422,11 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
         return new DefaultProjectConfigurationStartEvent(event.getEventTime(), event.getDisplayName(), projectConfigurationDescriptor);
     }
 
+    private PluginApplicationStartEvent pluginApplicationStartedEvent(InternalOperationStartedProgressEvent event, InternalPluginApplicationDescriptor descriptor) {
+        PluginApplicationOperationDescriptor pluginApplicationDescriptor = addDescriptor(event.getDescriptor(), toPluginApplicationDescriptor(descriptor));
+        return new DefaultPluginApplicationStartEvent(event.getEventTime(), event.getDisplayName(), pluginApplicationDescriptor);
+    }
+
     private TransformStartEvent transformStartedEvent(InternalOperationStartedProgressEvent event, InternalTransformDescriptor descriptor) {
         TransformOperationDescriptor projectConfigurationDescriptor = addDescriptor(event.getDescriptor(), toTransformDescriptor(descriptor));
         return new DefaultTransformStartEvent(event.getEventTime(), event.getDisplayName(), projectConfigurationDescriptor);
@@ -422,6 +461,11 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
     private ProjectConfigurationFinishEvent projectConfigurationFinishedEvent(InternalOperationFinishedProgressEvent event) {
         ProjectConfigurationOperationDescriptor descriptor = removeDescriptor(ProjectConfigurationOperationDescriptor.class, event.getDescriptor());
         return new DefaultProjectConfigurationFinishEvent(event.getEventTime(), event.getDisplayName(), descriptor, toProjectConfigurationResult((InternalProjectConfigurationResult) event.getResult()));
+    }
+
+    private PluginApplicationFinishEvent pluginApplicationFinishedEvent(InternalOperationFinishedProgressEvent event) {
+        PluginApplicationOperationDescriptor descriptor = removeDescriptor(PluginApplicationOperationDescriptor.class, event.getDescriptor());
+        return new DefaultPluginApplicationFinishEvent(event.getEventTime(), event.getDisplayName(), descriptor, toResult(event.getResult()));
     }
 
     private TransformFinishEvent transformFinishedEvent(InternalOperationFinishedProgressEvent event) {
@@ -499,6 +543,11 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
     private ProjectConfigurationOperationDescriptor toProjectConfigurationDescriptor(InternalProjectConfigurationDescriptor descriptor) {
         OperationDescriptor parent = getParentDescriptor(descriptor.getParentId());
         return new DefaultProjectConfigurationOperationDescriptor(descriptor, parent);
+    }
+
+    private PluginApplicationOperationDescriptor toPluginApplicationDescriptor(InternalPluginApplicationDescriptor descriptor) {
+        OperationDescriptor parent = getParentDescriptor(descriptor.getParentId());
+        return new DefaultPluginApplicationOperationDescriptor(descriptor, parent, toPluginIdentifier(descriptor.getPlugin()));
     }
 
     private TransformOperationDescriptor toTransformDescriptor(InternalTransformDescriptor descriptor) {

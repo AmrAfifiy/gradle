@@ -54,6 +54,7 @@ class ProviderConnectionTest extends Specification {
         configuration.clientSubscriptions.anyOperationTypeRequested
         configuration.clientSubscriptions.isRequested(OperationType.GENERIC)
         configuration.clientSubscriptions.isRequested(OperationType.PROJECT_CONFIGURATION)
+        configuration.clientSubscriptions.isRequested(OperationType.CONFIGURATION_STEPS)
         configuration.clientSubscriptions.isRequested(OperationType.TRANSFORM)
         configuration.clientSubscriptions.isRequested(OperationType.WORK_ITEM)
         !configuration.clientSubscriptions.isRequested(OperationType.TEST)

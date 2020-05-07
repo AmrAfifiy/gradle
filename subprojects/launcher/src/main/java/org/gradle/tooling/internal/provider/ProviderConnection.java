@@ -362,6 +362,7 @@ public class ProviderConnection {
             .put(InternalBuildProgressListener.TASK_EXECUTION, OperationType.TASK)
             .put(InternalBuildProgressListener.WORK_ITEM_EXECUTION, OperationType.WORK_ITEM)
             .put(InternalBuildProgressListener.PROJECT_CONFIGURATION_EXECUTION, OperationType.PROJECT_CONFIGURATION)
+            .put(InternalBuildProgressListener.CONFIGURATION_STEPS_EXECUTION, OperationType.CONFIGURATION_STEPS)
             .put(InternalBuildProgressListener.TRANSFORM_EXECUTION, OperationType.TRANSFORM)
             .put(InternalBuildProgressListener.BUILD_EXECUTION, OperationType.GENERIC)
             .put(InternalBuildProgressListener.TEST_OUTPUT, OperationType.TEST_OUTPUT)
@@ -411,6 +412,12 @@ public class ProviderConnection {
                         operationTypes.add(OperationType.PROJECT_CONFIGURATION);
                         operationTypes.add(OperationType.TRANSFORM);
                         operationTypes.add(OperationType.WORK_ITEM);
+                    }
+                }
+                if (consumerVersion.compareTo(GradleVersion.version("6.7")) <= 0) {
+                    // Configuration steps type was split out of 'generic' type in 6.8, so include it when the consumer requests 'generic'
+                    if (operationTypes.contains(OperationType.GENERIC)) {
+                        operationTypes.add(OperationType.CONFIGURATION_STEPS);
                     }
                 }
                 return operationTypes;

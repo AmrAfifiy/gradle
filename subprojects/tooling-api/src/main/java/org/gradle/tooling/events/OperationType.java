@@ -93,6 +93,21 @@ public enum OperationType {
     PROJECT_CONFIGURATION,
 
     /**
+     * Flag for configuration steps progress events.
+     *
+     * <p>
+     * The following events are currently issued for this operation type.
+     * <ul>
+     *     <li>{@link org.gradle.tooling.events.configuration.PluginApplicationStartEvent}</li>
+     *     <li>{@link org.gradle.tooling.events.configuration.PluginApplicationFinishEvent}</li>
+     * </ul>
+     *
+     * @since 6.8
+     */
+    @Incubating
+    CONFIGURATION_STEPS,
+
+    /**
      * Flag for transform operation progress events.
      *
      * <p>
